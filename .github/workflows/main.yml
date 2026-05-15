@@ -21,10 +21,13 @@ jobs:
       - name: Install Dependencies
         run: |
           pip install -r requirements.txt
-          playwright install
+          playwright install --with-deps
+
+      - name: Install XVFB
+        run: sudo apt-get install -y xvfb
 
       - name: Run Script
-        run: python main.py
+        run: xvfb-run python main.py
 
       - name: Upload Excel
         uses: actions/upload-artifact@v4
