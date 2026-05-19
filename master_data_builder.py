@@ -49,7 +49,10 @@ print(f"\nUsing NSE file: {latest_file}")
 
 nse_df = pd.read_excel(latest_file)
 
-# CHANGE COLUMN INDEX IF NEEDED
+# -----------------------------
+# GET SYMBOLS
+# -----------------------------
+
 symbols = nse_df.iloc[:, 0].astype(str).tolist()
 
 # -----------------------------
@@ -80,9 +83,12 @@ with sync_playwright() as p:
 
     page = browser.new_page()
 
-    page.goto("https://ticker.finology.in/")
+    page.goto(
+        "https://ticker.finology.in/",
+        timeout=120000
+    )
 
-    page.wait_for_timeout(5000)
+    page.wait_for_timeout(10000)
 
     for symbol in missing_symbols:
 
@@ -92,25 +98,41 @@ with sync_playwright() as p:
             print(f"Processing: {symbol}")
 
             # -----------------------------
-            # SEARCH
+            # WAIT FOR SEARCH BOX
             # -----------------------------
 
-            search_box = page.get_by_role(
-                "searchbox",
-                name="Type a Company Name or Brand"
+            page.wait_for_selector(
+                'input[type="search"]',
+                timeout=60000
             )
+
+            search_box = page.locator(
+                'input[type="search"]'
+            )
+
+            # -----------------------------
+            # CLEAR OLD SEARCH
+            # -----------------------------
 
             search_box.click()
 
             search_box.press("Control+A")
+
             search_box.press("Backspace")
 
-            search_box.type(symbol, delay=200)
+            # -----------------------------
+            # TYPE SYMBOL
+            # -----------------------------
+
+            search_box.type(
+                symbol,
+                delay=200
+            )
 
             page.wait_for_timeout(3000)
 
             # -----------------------------
-            # FIND EXACT NSE MATCH
+            # GET LINKS
             # -----------------------------
 
             links = page.get_by_role("link")
@@ -134,7 +156,14 @@ with sync_playwright() as p:
 
                         found = True
 
-                        company_name = text.split("\n")[0].strip()
+                        company_name = (
+                            text.split("\n")[0]
+                            .strip()
+                        )
+
+                        # -----------------------------
+                        # CLICK RESULT
+                        # -----------------------------
 
                         links.nth(i).click()
 
@@ -171,14 +200,17 @@ with sync_playwright() as p:
                         print(f"\nPrice: {price}")
 
                         # -----------------------------
-                        # RATIOS EXTRACTION
+                        # RATIOS TEXT
                         # -----------------------------
 
                         ratios_text = page.locator(
                             "#mainContent_updAddRatios"
                         ).inner_text()
 
+                        # -----------------------------
                         # MARKET CAP
+                        # -----------------------------
+
                         market_match = re.search(
                             r"MARKET CAP\s*₹\s*([\d,\.]+)",
                             ratios_text
@@ -186,10 +218,13 @@ with sync_playwright() as p:
 
                         if market_match:
 
-                            market_cap_text = market_match.group(1)
+                            market_cap_text = (
+                                market_match.group(1)
+                            )
 
                             market_cap_crore = float(
-                                market_cap_text.replace(",", "")
+                                market_cap_text
+                                .replace(",", "")
                             )
 
                         else:
@@ -202,7 +237,7 @@ with sync_playwright() as p:
                         )
 
                         # -----------------------------
-                        # NO OF SHARES EXTRACTION
+                        # SHARES EXTRACTION
                         # -----------------------------
 
                         shares_match = re.search(
@@ -212,14 +247,19 @@ with sync_playwright() as p:
 
                         if not shares_match:
 
-                            print("NO. OF SHARES Not Found")
+                            print(
+                                "NO. OF SHARES Not Found"
+                            )
 
                             break
 
-                        shares_crore_text = shares_match.group(1)
+                        shares_crore_text = (
+                            shares_match.group(1)
+                        )
 
                         shares_crore = float(
-                            shares_crore_text.replace(",", "")
+                            shares_crore_text
+                            .replace(",", "")
                         )
 
                         outstanding_shares = (
@@ -239,18 +279,22 @@ with sync_playwright() as p:
 
                             "Symbol": symbol,
 
-                            "Company_Name": company_name,
+                            "Company_Name":
+                                company_name,
 
                             "Price": price,
 
-                            "Market_Cap_Crore": market_cap_crore,
+                            "Market_Cap_Crore":
+                                market_cap_crore,
 
-                            "Shares_Crore": shares_crore,
+                            "Shares_Crore":
+                                shares_crore,
 
                             "Outstanding_Shares":
                                 outstanding_shares,
 
-                            "Finology_URL": page.url
+                            "Finology_URL":
+                                page.url
                         })
 
                         # -----------------------------
@@ -258,27 +302,35 @@ with sync_playwright() as p:
                         # -----------------------------
 
                         page.goto(
-                            "https://ticker.finology.in/"
+                            "https://ticker.finology.in/",
+                            timeout=120000
                         )
 
-                        page.wait_for_timeout(3000)
+                        page.wait_for_timeout(5000)
 
                         break
 
                 except Exception as inner_error:
 
-                    print(f"\nInner Error for {symbol}")
+                    print(
+                        f"\nInner Error for {symbol}"
+                    )
+
                     print(inner_error)
 
             if not found:
 
-                print(f"\nNO MATCH FOUND FOR: {symbol}")
+                print(
+                    f"\nNO MATCH FOUND FOR: "
+                    f"{symbol}"
+                )
 
                 unmatched_symbols.append(symbol)
 
         except Exception as e:
 
             print(f"\nERROR for {symbol}")
+
             print(e)
 
     browser.close()
@@ -314,7 +366,9 @@ else:
 if unmatched_symbols:
 
     unmatched_df = pd.DataFrame({
-        "Unmatched_Symbols": unmatched_symbols
+
+        "Unmatched_Symbols":
+            unmatched_symbols
     })
 
     unmatched_df.to_excel(
@@ -322,4 +376,6 @@ if unmatched_symbols:
         index=False
     )
 
-    print("\nUNMATCHED SYMBOLS SAVED")
+    print(
+        "\nUNMATCHED SYMBOLS SAVED"
+    )
