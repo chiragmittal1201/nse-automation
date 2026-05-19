@@ -83,12 +83,33 @@ with sync_playwright() as p:
 
     page = browser.new_page()
 
+    # -----------------------------
+    # FORCE DESKTOP VIEWPORT
+    # -----------------------------
+
+    page.set_viewport_size({
+        "width": 1920,
+        "height": 1080
+    })
+
+    # -----------------------------
+    # OPEN FINOLOGY
+    # -----------------------------
+
     page.goto(
         "https://ticker.finology.in/",
         timeout=120000
     )
 
-    page.wait_for_timeout(10000)
+    page.wait_for_load_state(
+        "networkidle"
+    )
+
+    page.wait_for_timeout(8000)
+
+    # -----------------------------
+    # LOOP SYMBOLS
+    # -----------------------------
 
     for symbol in missing_symbols:
 
@@ -98,21 +119,22 @@ with sync_playwright() as p:
             print(f"Processing: {symbol}")
 
             # -----------------------------
-            # WAIT FOR SEARCH BOX
+            # WAIT PAGE STABLE
             # -----------------------------
 
-            page.wait_for_selector(
-                'input[type="search"]',
-                timeout=60000
+            page.wait_for_load_state(
+                "networkidle"
             )
+
+            page.wait_for_timeout(5000)
+
+            # -----------------------------
+            # SEARCH BOX
+            # -----------------------------
 
             search_box = page.locator(
-                'input[type="search"]'
-            )
-
-            # -----------------------------
-            # CLEAR OLD SEARCH
-            # -----------------------------
+                "input.form-control"
+            ).first
 
             search_box.click()
 
@@ -129,10 +151,10 @@ with sync_playwright() as p:
                 delay=200
             )
 
-            page.wait_for_timeout(3000)
+            page.wait_for_timeout(4000)
 
             # -----------------------------
-            # GET LINKS
+            # GET ALL LINKS
             # -----------------------------
 
             links = page.get_by_role("link")
@@ -166,6 +188,10 @@ with sync_playwright() as p:
                         # -----------------------------
 
                         links.nth(i).click()
+
+                        page.wait_for_load_state(
+                            "networkidle"
+                        )
 
                         page.wait_for_timeout(5000)
 
@@ -304,6 +330,10 @@ with sync_playwright() as p:
                         page.goto(
                             "https://ticker.finology.in/",
                             timeout=120000
+                        )
+
+                        page.wait_for_load_state(
+                            "networkidle"
                         )
 
                         page.wait_for_timeout(5000)
