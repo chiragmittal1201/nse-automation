@@ -101,11 +101,8 @@ with sync_playwright() as p:
         timeout=120000
     )
 
-    page.wait_for_load_state(
-        "networkidle"
-    )
-
-    page.wait_for_timeout(8000)
+    # FIXED WAIT INSTEAD OF NETWORKIDLE
+    page.wait_for_timeout(10000)
 
     # -----------------------------
     # LOOP SYMBOLS
@@ -121,10 +118,6 @@ with sync_playwright() as p:
             # -----------------------------
             # WAIT PAGE STABLE
             # -----------------------------
-
-            page.wait_for_load_state(
-                "networkidle"
-            )
 
             page.wait_for_timeout(5000)
 
@@ -189,11 +182,8 @@ with sync_playwright() as p:
 
                         links.nth(i).click()
 
-                        page.wait_for_load_state(
-                            "networkidle"
-                        )
-
-                        page.wait_for_timeout(5000)
+                        # FIXED WAIT
+                        page.wait_for_timeout(7000)
 
                         print("\nCURRENT URL:")
                         print(page.url)
@@ -332,11 +322,8 @@ with sync_playwright() as p:
                             timeout=120000
                         )
 
-                        page.wait_for_load_state(
-                            "networkidle"
-                        )
-
-                        page.wait_for_timeout(5000)
+                        # FIXED WAIT
+                        page.wait_for_timeout(7000)
 
                         break
 
@@ -409,3 +396,4 @@ if unmatched_symbols:
     print(
         "\nUNMATCHED SYMBOLS SAVED"
     )
+    //new
