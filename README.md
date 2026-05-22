@@ -63,3 +63,13 @@ openpyxl
 ## Status
 
 Active personal automation project focused on structured market-data generation and workflow experimentation.
+
+## Workflow
+
+1. GitHub Actions triggers the automation on schedule
+2. NSE data extraction runs using Playwright
+3. Processed datasets are cleaned and structured
+4. Master dataset builder combines and organizes data
+5. Excel exports are automatically updated and committed
+
+
